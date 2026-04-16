@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Studio Panel</title>
+  <style>
+    :root {
+      --bg: #f5f5f3;
+      --panel: rgba(255, 255, 255, 0.78);
+      --line: rgba(24, 24, 22, 0.08);
+      --line-strong: rgba(24, 24, 22, 0.13);
+      --text: #171715;
+      --muted: rgba(23, 23, 21, 0.55);
+      --muted-soft: rgba(23, 23, 21, 0.38);
+      --active: rgba(23, 23, 21, 0.045);
+      --radius: 16px;
+      --sidebar-width: 88px;
+      --transition: 160ms ease;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background:
+        radial-gradient(circle at top left, rgba(255, 255, 255, 0.95), transparent 32%),
+        linear-gradient(180deg, #f7f7f4 0%, #f2f2ef 100%);
+      color: var(--text);
+      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    }
+
+    body {
+      font-size: 12px;
+      letter-spacing: 0.01em;
+    }
+
+    button, input, textarea {
+      font: inherit;
+      color: inherit;
+    }
+
+    button {
+      border: 0;
+      background: none;
+      padding: 0;
+      cursor: pointer;
+    }
+
+    .app-shell {
+      display: grid;
+      grid-template-columns: var(--sidebar-width) 1fr;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      background: rgba(249, 249, 246, 0.86);
+      border-right: 1px solid var(--line);
+      padding: 20px 14px 14px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      backdrop-filter: blur(18px);
+      position: sticky;
+      top: 0;
+      height: 100vh;
+    }
+
+    .brand {
+      width: 32px;
+      height: 32px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      margin: 0 auto 18px;
+      background: rgba(255, 255, 255, 0.7);
+    }
+
+    .brand::before {
+      content: "";
+      width: 12px;
+      height: 12px;
+      border: 1px solid var(--line-strong);
+      border-radius: 4px;
+    }
+
+    .nav-group, .nav-foot {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .nav-item {
+      width: 100%;
+      min-height: 56px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      gap: 6px;
+      color: var(--muted);
+      transition: background var(--transition), color var(--transition), border-color var(--transition);
+      border: 1px solid transparent;
+    }
+
+    .nav-item svg {
+      width: 15px;
+      height: 15px;
+      stroke-width: 1.5;
+    }
+
+    .nav-item span { font-size: 10px; }
+
+    .nav-item:hover, .nav-item.active {
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.62);
+      border-color: var(--line);
+    }
+
+    .main-shell {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .topbar {
+      height: 64px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 28px;
+      background: rgba(247, 247, 244, 0.72);
+      backdrop-filter: blur(18px);
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+
+    .topbar-title {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+    }
+
+    .eyebrow {
+      color: var(--muted-soft);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      font-size: 10px;
+    }
+
+    h1, h2, h3, p {
+      margin: 0;
+      font-weight: 500;
+    }
+
+    h1 {
+      font-size: 13px;
+      letter-spacing: 0.02em;
+    }
+
+    .topbar-tools {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .search {
+      width: 220px;
+      height: 34px;
+      padding: 0 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.56);
+      outline: none;
+    }
+
+    .ghost-button, .soft-button, .filter-chip, .tab {
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.52);
+      color: var(--muted);
+      transition: background var(--transition), border-color var(--transition), color var(--transition);
+    }
+
+    .ghost-button, .soft-button {
+      height: 32px;
+      padding: 0 12px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .ghost-button:hover, .soft-button:hover {
+      background: rgba(255, 255, 255, 0.85);
+      border-color: var(--line-strong);
+      color: var(--text);
+    }
+
+    .content { padding: 22px 24px 24px; }
+
+    .page {
+      display: none;
+      animation: fade-in 180ms ease;
+    }
+
+    .page.active { display: block; }
+
+    .layout-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.75fr);
+      gap: 18px;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+      backdrop-filter: blur(16px);
+      min-width: 0;
+    }
+
+    .panel-header {
+      height: 54px;
+      padding: 0 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .panel-title {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .panel-title h2 { font-size: 12px; }
+
+    .panel-title p, .hint, .muted {
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .panel-body { padding: 16px 18px 18px; }
+
+    .dash-grid, .split-grid, .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .dash-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      margin-bottom: 14px;
+    }
+
+    .metric, .section-block, .placeholder-row, .log-row {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.42);
+    }
+
+    .metric {
+      min-height: 92px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .line, .short-line, .tiny-line {
+      display: block;
+      height: 7px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, rgba(23, 23, 21, 0.08), rgba(23, 23, 21, 0.03));
+    }
+
+    .line { width: 100%; }
+    .short-line { width: 58%; }
+    .tiny-line { width: 34%; }
+
+    .stack, .row-copy, .placeholder-list, .log-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .empty-canvas, .empty-note {
+      border: 1px dashed rgba(23, 23, 21, 0.12);
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      color: var(--muted-soft);
+      background: rgba(255, 255, 255, 0.22);
+      text-align: center;
+      padding: 16px;
+    }
+
+    .empty-canvas {
+      min-height: 280px;
+      background:
+        linear-gradient(rgba(23, 23, 21, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(23, 23, 21, 0.03) 1px, transparent 1px);
+      background-size: 24px 24px;
+      background-position: -1px -1px;
+    }
+
+    .empty-note { min-height: 120px; }
+
+    .project-toolbar, .filter-row, .tab-bar, .footer-actions, .section-head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .section-head, .project-head {
+      justify-content: space-between;
+    }
+
+    .filter-chip, .tab {
+      height: 28px;
+      padding: 0 10px;
+      border-radius: 999px;
+    }
+
+    .tab {
+      border-color: transparent;
+      background: transparent;
+    }
+
+    .tab.active {
+      background: var(--active);
+      color: var(--text);
+      border-color: var(--line);
+    }
+
+    .project-list {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .project-row {
+      width: 100%;
+      min-height: 62px;
+      padding: 0 18px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 110px 120px 18px;
+      align-items: center;
+      gap: 12px;
+      border-top: 1px solid var(--line);
+      color: inherit;
+      transition: background var(--transition);
+      text-align: left;
+    }
+
+    .project-row:hover {
+      background: rgba(255, 255, 255, 0.48);
+    }
+
+    .project-name {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .project-mark {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      border: 1px solid var(--line-strong);
+      background: rgba(23, 23, 21, 0.07);
+      flex: 0 0 auto;
+    }
+
+    .project-copy {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      min-width: 0;
+    }
+
+    .truncate {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .caret {
+      width: 7px;
+      height: 7px;
+      border-top: 1px solid var(--muted);
+      border-right: 1px solid var(--muted);
+      transform: rotate(45deg);
+      justify-self: end;
+    }
+
+    .project-head {
+      display: flex;
+      align-items: flex-start;
+      gap: 18px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--line);
+      margin-bottom: 16px;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      height: 24px;
+      padding: 0 10px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      color: var(--muted);
+      background: rgba(255, 255, 255, 0.5);
+    }
+
+    .status-pill::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: rgba(23, 23, 21, 0.35);
+    }
+
+    .tab-bar {
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--line);
+      margin-bottom: 16px;
+    }
+
+    .tab-panel { display: none; }
+    .tab-panel.active {
+      display: block;
+      animation: fade-in 150ms ease;
+    }
+
+    .section-block {
+      padding: 14px;
+      min-height: 120px;
+    }
+
+    .section-block.tall { min-height: 180px; }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .field-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted-soft);
+    }
+
+    .input, .textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.58);
+      border-radius: 12px;
+      padding: 0 12px;
+      outline: none;
+    }
+
+    .input { height: 36px; }
+
+    .textarea {
+      height: 112px;
+      resize: none;
+      padding-top: 10px;
+    }
+
+    .placeholder-row, .log-row {
+      min-height: 46px;
+      padding: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .footer-actions {
+      justify-content: flex-end;
+      padding-top: 14px;
+      border-top: 1px solid var(--line);
+      margin-top: 16px;
+    }
+
+    @keyframes fade-in {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 1100px) {
+      .layout-grid, .split-grid, .form-grid, .dash-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .project-row {
+        grid-template-columns: minmax(0, 1fr) 90px 90px 18px;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .app-shell { grid-template-columns: 1fr; }
+
+      .sidebar {
+        position: static;
+        height: auto;
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+        padding: 14px;
+      }
+
+      .nav-group, .nav-foot {
+        flex-direction: row;
+        justify-content: center;
+      }
+
+      .nav-item {
+        min-height: 52px;
+        width: 72px;
+      }
+
+      .topbar {
+        padding: 12px 16px;
+        height: auto;
+        min-height: 64px;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .topbar-tools {
+        width: 100%;
+        justify-content: space-between;
+      }
+
+      .search {
+        flex: 1;
+        width: auto;
+      }
+
+      .content { padding: 16px; }
+
+      .project-row {
+        grid-template-columns: minmax(0, 1fr) 18px;
+        padding-top: 12px;
+        padding-bottom: 12px;
+      }
+
+      .project-row .muted, .project-row .hint { display: none; }
+      .project-head { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div>
+        <div class="brand" aria-hidden="true"></div>
+        <nav class="nav-group" aria-label="Navegação principal">
+          <button class="nav-item active" type="button" data-page-target="dashboard">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path d="M4 5.5h6v6H4zM14 5.5h6v10h-6zM4 15.5h6v4H4zM14 17.5h6v2h-6z"/></svg>
+            <span>Início</span>
+          </button>
+          <button class="nav-item" type="button" data-page-target="projects">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path d="M4 7.5h16M4 12h16M4 16.5h10"/></svg>
+            <span>Projetos</span>
+          </button>
+          <button class="nav-item" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path d="M5 12h14M12 5v14"/></svg>
+            <span>Fluxos</span>
+          </button>
+          <button class="nav-item" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path d="M7 7h10v10H7z"/><path d="M9.5 9.5h5v5h-5z"/></svg>
+            <span>Equipe</span>
+          </button>
+        </nav>
+      </div>
+
+      <div class="nav-foot">
+        <button class="nav-item" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path d="M12 3.5v2.2M12 18.3v2.2M5.7 5.7l1.6 1.6M16.7 16.7l1.6 1.6M3.5 12h2.2M18.3 12h2.2M5.7 18.3l1.6-1.6M16.7 7.3l1.6-1.6"/><circle cx="12" cy="12" r="3.8"/></svg>
+          <span>Ajustes</span>
+        </button>
+      </div>
+    </aside>
+
+    <main class="main-shell">
+      <header class="topbar">
+        <div class="topbar-title">
+          <span class="eyebrow">Workspace</span>
+          <h1 id="header-title">Painel</h1>
+        </div>
+
+        <div class="topbar-tools">
+          <input class="search" type="search" placeholder="Buscar" aria-label="Buscar">
+          <button class="ghost-button" type="button">Filtrar</button>
+          <button class="ghost-button" type="button">Organizar</button>
+        </div>
+      </header>
+
+      <section class="content">
+        <div class="page active" id="page-dashboard">
+          <div class="layout-grid">
+            <section class="panel">
+              <div class="panel-header">
+                <div class="panel-title">
+                  <h2>Dashboard</h2>
+                  <p>Estrutura inicial pronta para receber métricas</p>
+                </div>
+                <span class="hint">vazio</span>
+              </div>
+              <div class="panel-body">
+                <div class="dash-grid">
+                  <div class="metric"><span class="tiny-line"></span><div class="stack"><span class="short-line"></span><span class="line"></span></div></div>
+                  <div class="metric"><span class="tiny-line"></span><div class="stack"><span class="short-line"></span><span class="line"></span></div></div>
+                  <div class="metric"><span class="tiny-line"></span><div class="stack"><span class="short-line"></span><span class="line"></span></div></div>
+                </div>
+                <div class="empty-canvas">Área estrutural</div>
+              </div>
+            </section>
+
+            <aside class="panel">
+              <div class="panel-header">
+                <div class="panel-title">
+                  <h2>Atividade</h2>
+                  <p>Espaço reservado</p>
+                </div>
+              </div>
+              <div class="panel-body">
+                <div class="placeholder-list">
+                  <div class="placeholder-row"><div class="row-copy"><span class="short-line"></span><span class="line"></span></div></div>
+                  <div class="placeholder-row"><div class="row-copy"><span class="short-line"></span><span class="line"></span></div></div>
+                  <div class="placeholder-row"><div class="row-copy"><span class="short-line"></span><span class="line"></span></div></div>
+                </div>
+              </div>
+            </aside>
+          </div>
+        </div>
+
+        <div class="page" id="page-projects">
+          <section class="panel">
+            <div class="panel-header">
+              <div class="panel-title">
+                <h2>Projetos</h2>
+                <p>Lista estrutural sem conteúdo preenchido</p>
+              </div>
+              <div class="filter-row">
+                <button class="filter-chip" type="button">Todos</button>
+                <button class="filter-chip" type="button">Ativos</button>
+                <button class="filter-chip" type="button">Arquivados</button>
+              </div>
+            </div>
+
+            <div class="project-list">
+              <button class="project-row" type="button" data-open-project="Projeto A">
+                <div class="project-name">
+                  <span class="project-mark" aria-hidden="true"></span>
+                  <div class="project-copy">
+                    <span class="truncate">Projeto A</span>
+                    <span class="hint truncate">Estrutura interna</span>
+                  </div>
+                </div>
+                <span class="muted">interno</span>
+                <span class="hint">pronto</span>
+                <span class="caret" aria-hidden="true"></span>
+              </button>
+
+              <button class="project-row" type="button" data-open-project="Projeto B">
+                <div class="project-name">
+                  <span class="project-mark" aria-hidden="true"></span>
+                  <div class="project-copy">
+                    <span class="truncate">Projeto B</span>
+                    <span class="hint truncate">Estrutura interna</span>
+                  </div>
+                </div>
+                <span class="muted">interno</span>
+                <span class="hint">pronto</span>
+                <span class="caret" aria-hidden="true"></span>
+              </button>
+
+              <button class="project-row" type="button" data-open-project="Projeto C">
+                <div class="project-name">
+                  <span class="project-mark" aria-hidden="true"></span>
+                  <div class="project-copy">
+                    <span class="truncate">Projeto C</span>
+                    <span class="hint truncate">Estrutura interna</span>
+                  </div>
+                </div>
+                <span class="muted">interno</span>
+                <span class="hint">pronto</span>
+                <span class="caret" aria-hidden="true"></span>
+              </button>
+
+              <button class="project-row" type="button" data-open-project="Projeto D">
+                <div class="project-name">
+                  <span class="project-mark" aria-hidden="true"></span>
+                  <div class="project-copy">
+                    <span class="truncate">Projeto D</span>
+                    <span class="hint truncate">Estrutura interna</span>
+                  </div>
+                </div>
+                <span class="muted">interno</span>
+                <span class="hint">pronto</span>
+                <span class="caret" aria-hidden="true"></span>
+              </button>
+            </div>
+          </section>
+        </div>
+
+        <div class="page" id="page-project-detail">
+          <section class="panel">
+            <div class="panel-body">
+              <div class="project-head">
+                <div class="stack">
+                  <span class="eyebrow">Projeto</span>
+                  <h2 id="project-name">Projeto A</h2>
+                  <p class="muted">Interface pronta para receber módulos internos</p>
+                </div>
+
+                <div class="project-toolbar">
+                  <span class="status-pill">status</span>
+                  <button class="soft-button" type="button" data-page-target="projects">Voltar</button>
+                </div>
+              </div>
+
+              <div class="tab-bar" role="tablist" aria-label="Abas do projeto">
+                <button class="tab active" type="button" data-tab-target="overview">Visão Geral</button>
+                <button class="tab" type="button" data-tab-target="triggers">Triggers</button>
+                <button class="tab" type="button" data-tab-target="webhooks">Webhooks</button>
+                <button class="tab" type="button" data-tab-target="logs">Logs</button>
+                <button class="tab" type="button" data-tab-target="settings">Configurações</button>
+              </div>
+
+              <div class="tab-panel active" id="tab-overview">
+                <div class="split-grid">
+                  <section class="section-block tall">
+                    <div class="section-head">
+                      <h3>Resumo</h3>
+                      <span class="hint">placeholder</span>
+                    </div>
+                    <div class="stack">
+                      <span class="tiny-line"></span>
+                      <span class="short-line"></span>
+                      <span class="line"></span>
+                      <span class="line"></span>
+                    </div>
+                  </section>
+
+                  <section class="section-block tall">
+                    <div class="section-head">
+                      <h3>Estrutura</h3>
+                      <span class="hint">blocos</span>
+                    </div>
+                    <div class="placeholder-list">
+                      <div class="placeholder-row"><div class="row-copy"><span class="short-line"></span><span class="line"></span></div></div>
+                      <div class="placeholder-row"><div class="row-copy"><span class="short-line"></span><span class="line"></span></div></div>
+                    </div>
+                  </section>
+                </div>
+              </div>
+
+              <div class="tab-panel" id="tab-triggers">
+                <div class="split-grid">
+                  <section class="section-block">
+                    <div class="section-head">
+                      <h3>Lista</h3>
+                      <button class="ghost-button" type="button">Adicionar</button>
+                    </div>
+                    <div class="empty-note">Área vazia para triggers</div>
+                  </section>
+
+                  <section class="section-block">
+                    <div class="section-head">
+                      <h3>Configuração</h3>
+                      <span class="hint">formulário</span>
+                    </div>
+                    <div class="form-grid">
+                      <label class="field">
+                        <span class="field-label">Evento</span>
+                        <input class="input" type="text" placeholder=" ">
+                      </label>
+                      <label class="field">
+                        <span class="field-label">Canal</span>
+                        <input class="input" type="text" placeholder=" ">
+                      </label>
+                      <label class="field" style="grid-column: 1 / -1;">
+                        <span class="field-label">Condição</span>
+                        <textarea class="textarea" placeholder=" "></textarea>
+                      </label>
+                    </div>
+                  </section>
+                </div>
+              </div>
+
+              <div class="tab-panel" id="tab-webhooks">
+                <div class="split-grid">
+                  <section class="section-block">
+                    <div class="section-head">
+                      <h3>Endpoints</h3>
+                      <span class="hint">estrutura</span>
+                    </div>
+                    <div class="placeholder-list">
+                      <div class="placeholder-row"><div class="row-copy"><span class="short-line"></span><span class="line"></span></div></div>
+                      <div class="placeholder-row"><div class="row-copy"><span class="short-line"></span><span class="line"></span></div></div>
+                    </div>
+                  </section>
+
+                  <section class="section-block">
+                    <div class="section-head">
+                      <h3>Detalhe</h3>
+                      <button class="ghost-button" type="button">Testar</button>
+                    </div>
+                    <div class="form-grid">
+                      <label class="field">
+                        <span class="field-label">Método</span>
+                        <input class="input" type="text" placeholder=" ">
+                      </label>
+                      <label class="field">
+                        <span class="field-label">Destino</span>
+                        <input class="input" type="text" placeholder=" ">
+                      </label>
+                      <label class="field" style="grid-column: 1 / -1;">
+                        <span class="field-label">Payload</span>
+                        <textarea class="textarea" placeholder=" "></textarea>
+                      </label>
+                    </div>
+                  </section>
+                </div>
+              </div>
+
+              <div class="tab-panel" id="tab-logs">
+                <section class="section-block tall">
+                  <div class="section-head">
+                    <h3>Logs</h3>
+                    <div class="filter-row">
+                      <button class="filter-chip" type="button">Todos</button>
+                      <button class="filter-chip" type="button">Recentes</button>
+                    </div>
+                  </div>
+                  <div class="log-list">
+                    <div class="log-row">
+                      <div class="row-copy"><span class="short-line"></span><span class="line"></span></div>
+                      <span class="hint">--:--</span>
+                    </div>
+                    <div class="log-row">
+                      <div class="row-copy"><span class="short-line"></span><span class="line"></span></div>
+                      <span class="hint">--:--</span>
+                    </div>
+                    <div class="log-row">
+                      <div class="row-copy"><span class="short-line"></span><span class="line"></span></div>
+                      <span class="hint">--:--</span>
+                    </div>
+                  </div>
+                </section>
+              </div>
+
+              <div class="tab-panel" id="tab-settings">
+                <div class="split-grid">
+                  <section class="section-block">
+                    <div class="section-head">
+                      <h3>Geral</h3>
+                      <span class="hint">campos</span>
+                    </div>
+                    <div class="form-grid">
+                      <label class="field">
+                        <span class="field-label">Nome</span>
+                        <input class="input" type="text" placeholder=" ">
+                      </label>
+                      <label class="field">
+                        <span class="field-label">Status</span>
+                        <input class="input" type="text" placeholder=" ">
+                      </label>
+                      <label class="field" style="grid-column: 1 / -1;">
+                        <span class="field-label">Descrição</span>
+                        <textarea class="textarea" placeholder=" "></textarea>
+                      </label>
+                    </div>
+                  </section>
+
+                  <section class="section-block">
+                    <div class="section-head">
+                      <h3>Preferências</h3>
+                      <span class="hint">opções</span>
+                    </div>
+                    <div class="stack">
+                      <label class="field">
+                        <span class="field-label">Ambiente</span>
+                        <input class="input" type="text" placeholder=" ">
+                      </label>
+                      <label class="field">
+                        <span class="field-label">Chave</span>
+                        <input class="input" type="text" placeholder=" ">
+                      </label>
+                    </div>
+                  </section>
+                </div>
+
+                <div class="footer-actions">
+                  <button class="ghost-button" type="button">Cancelar</button>
+                  <button class="soft-button" type="button">Salvar</button>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const pageButtons = document.querySelectorAll("[data-page-target]");
+    const pages = {
+      dashboard: document.getElementById("page-dashboard"),
+      projects: document.getElementById("page-projects"),
+      projectDetail: document.getElementById("page-project-detail")
+    };
+    const headerTitle = document.getElementById("header-title");
+    const projectName = document.getElementById("project-name");
+    const projectRows = document.querySelectorAll("[data-open-project]");
+    const tabs = document.querySelectorAll("[data-tab-target]");
+    const tabPanels = document.querySelectorAll(".tab-panel");
+
+    function setActivePage(pageKey) {
+      Object.values(pages).forEach((page) => page.classList.remove("active"));
+
+      if (pageKey === "project-detail") {
+        pages.projectDetail.classList.add("active");
+        headerTitle.textContent = "Projeto";
+      } else {
+        pages[pageKey].classList.add("active");
+        headerTitle.textContent = pageKey === "projects" ? "Projetos" : "Painel";
+      }
+
+      pageButtons.forEach((button) => {
+        button.classList.toggle("active", button.dataset.pageTarget === pageKey);
+      });
+    }
+
+    pageButtons.forEach((button) => {
+      button.addEventListener("click", () => setActivePage(button.dataset.pageTarget));
+    });
+
+    projectRows.forEach((row) => {
+      row.addEventListener("click", () => {
+        projectName.textContent = row.dataset.openProject;
+        setActivePage("project-detail");
+      });
+    });
+
+    tabs.forEach((tab) => {
+      tab.addEventListener("click", () => {
+        tabs.forEach((item) => item.classList.remove("active"));
+        tabPanels.forEach((panel) => panel.classList.remove("active"));
+        tab.classList.add("active");
+        document.getElementById(`tab-${tab.dataset.tabTarget}`).classList.add("active");
+      });
+    });
+  </script>
+</body>
+</html>
