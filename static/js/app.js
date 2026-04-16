@@ -25,6 +25,20 @@
     db: '<ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v8c0 1.7 3.1 3 7 3s7-1.3 7-3V6"/>'
   };
 
+  const PROJECT_ICON_OPTIONS = ["bolt", "link", "sync", "db"];
+  const PROJECT_COLOR_OPTIONS = [
+    "#4f7cff",
+    "#22c55e",
+    "#ef4444",
+    "#f59e0b",
+    "#8b5cf6",
+    "#ec4899",
+    "#f97316",
+    "#06b6d4",
+    "#84cc16",
+    "#a1a1aa"
+  ];
+
   const defaultState = {
     auth: { ok: false, username: "", role: "Admin", email: "jp@studio.local" },
     page: "dashboard",
@@ -32,7 +46,7 @@
     focusMode: false,
     notifyOpen: false,
     dropdownOpen: false,
-    filters: { search: "", status: "all" },
+    filters: { search: "" },
     settings: {
       systemName: "Studio Panel",
       theme: "dark",
@@ -66,10 +80,10 @@
     currentTabByProject: {},
     projectOrder: ["autoflow", "connecthub", "tasksync", "databridge"],
     projects: [
-      { id: "autoflow", name: "AutoFlow", status: "Ativo", description: "Automação de fluxos e integrações em tempo real.", color: "#7c7c80", icon: "bolt", pinned: true, archived: false, modules: { triggers: true, webhooks: true, logs: true, apiKeys: false, envVars: true, schedules: true, team: true, docs: false, metrics: true } },
-      { id: "connecthub", name: "ConnectHub", status: "Ativo", description: "Orquestração central de conectores e roteamento.", color: "#65656a", icon: "link", pinned: false, archived: false, modules: { triggers: true, webhooks: true, logs: true, apiKeys: true, envVars: true, schedules: false, team: false, docs: true, metrics: true } },
-      { id: "tasksync", name: "TaskSync", status: "Pausado", description: "Sincronização de tarefas entre serviços e times.", color: "#5d5d62", icon: "sync", pinned: false, archived: false, modules: { triggers: true, webhooks: false, logs: true, apiKeys: false, envVars: true, schedules: true, team: true, docs: false, metrics: false } },
-      { id: "databridge", name: "DataBridge", status: "Inativo", description: "Ponte de dados para ingestão e transformação.", color: "#54545a", icon: "db", pinned: false, archived: false, modules: { triggers: false, webhooks: false, logs: true, apiKeys: true, envVars: true, schedules: false, team: false, docs: true, metrics: true } }
+      { id: "autoflow", name: "AutoFlow", description: "Automação de fluxos e integrações em tempo real.", color: "#4f7cff", icon: "bolt", pinned: true, archived: false, modules: { triggers: true, webhooks: true, logs: true, apiKeys: false, envVars: true, schedules: true, team: true, docs: false, metrics: true } },
+      { id: "connecthub", name: "ConnectHub", description: "Orquestração central de conectores e roteamento.", color: "#22c55e", icon: "link", pinned: false, archived: false, modules: { triggers: true, webhooks: true, logs: true, apiKeys: true, envVars: true, schedules: false, team: false, docs: true, metrics: true } },
+      { id: "tasksync", name: "TaskSync", description: "Sincronização de tarefas entre serviços e times.", color: "#f59e0b", icon: "sync", pinned: false, archived: false, modules: { triggers: true, webhooks: false, logs: true, apiKeys: false, envVars: true, schedules: true, team: true, docs: false, metrics: false } },
+      { id: "databridge", name: "DataBridge", description: "Ponte de dados para ingestão e transformação.", color: "#a1a1aa", icon: "db", pinned: false, archived: false, modules: { triggers: false, webhooks: false, logs: true, apiKeys: true, envVars: true, schedules: false, team: false, docs: true, metrics: true } }
     ]
   };
 
@@ -90,14 +104,12 @@
     loginError: document.getElementById("login-error"),
     headerTitle: document.getElementById("header-title"),
     globalSearch: document.getElementById("global-search"),
-    projectsFilterButton: document.getElementById("projects-filter-button"),
     projectsSearch: document.getElementById("projects-search"),
     sidebarMainNav: document.getElementById("sidebar-main-nav"),
     sidebarFootNav: document.getElementById("sidebar-foot-nav"),
     sidebarToggle: document.querySelector("[data-sidebar-toggle]"),
     projectList: document.getElementById("project-list"),
     projectName: document.getElementById("project-name"),
-    projectStatus: document.getElementById("project-status"),
     projectDescription: document.getElementById("project-description"),
     projectTabs: document.getElementById("project-tabs"),
     projectTabPanels: document.getElementById("project-tab-panels"),
@@ -193,12 +205,6 @@
     save();
   }
 
-  function statusClass(status) {
-    if (status === "Ativo") return "active";
-    if (status === "Pausado") return "paused";
-    return "inactive";
-  }
-
   function getProject(id) {
     return S.projects.find((p) => p.id === id);
   }
@@ -225,8 +231,7 @@
   function sortedProjects() {
     const filtered = S.projects.filter((p) => {
       const text = p.name.toLowerCase().includes(S.filters.search.toLowerCase());
-      const status = S.filters.status === "all" ? true : p.status.toLowerCase() === S.filters.status;
-      return !p.archived && text && status;
+      return !p.archived && text;
     });
     const sortFn = (a, b) => (a.pinned !== b.pinned ? (a.pinned ? -1 : 1) : orderIndex(a.id) - orderIndex(b.id));
     return [...filtered].sort(sortFn);
@@ -236,14 +241,12 @@
     return `<div class="project-row" draggable="${!project.pinned}" data-project-id="${project.id}">
       <button class="row-handle" type="button" title="Arrastar"></button>
       <button class="project-name" type="button" data-open-project="${project.id}">
-        <span class="project-mark" style="background:${project.color}"></span>
+        <span class="project-mark" style="color:${project.color}">${icon(project.icon)}</span>
         <div class="project-copy">
           <span class="truncate">${project.name}</span>
           <span class="hint truncate">${project.description}</span>
         </div>
-        <span class="status-dot ${statusClass(project.status)}"></span>
       </button>
-      <span class="muted">${project.status}</span>
       <div class="row-actions">
         <button class="icon-tiny" type="button" data-row-action="up" data-id="${project.id}">↑</button>
         <button class="icon-tiny" type="button" data-row-action="down" data-id="${project.id}">↓</button>
@@ -260,7 +263,7 @@
   }
 
   function renderDashboardMetrics() {
-    const activeProjects = S.projects.filter((p) => !p.archived && p.status === "Ativo").length;
+    const activeProjects = S.projects.filter((p) => !p.archived).length;
     const triggers = S.projects.reduce((sum, p) => sum + (p.modules.triggers ? 1 : 0), 0);
     const integrations = S.projects.reduce((sum, p) => sum + (p.modules.webhooks ? 1 : 0), 0);
     E.kpiProjects.textContent = String(activeProjects || 0);
@@ -277,18 +280,17 @@
     if (!p) return;
     S.currentProjectId = p.id;
     E.projectName.textContent = p.name;
-    E.projectStatus.textContent = p.status;
     E.projectDescription.textContent = p.description;
     const tabs = tabsFor(p);
     const current = S.currentTabByProject[p.id] && tabs.some((tab) => tab.id === S.currentTabByProject[p.id]) ? S.currentTabByProject[p.id] : "overview";
     S.currentTabByProject[p.id] = current;
     E.projectTabs.innerHTML = tabs.map((tab, index) => `<button class="tab ${tab.id === current ? "active" : ""}" type="button" data-tab="${tab.id}" style="--tab-index:${index}">${tab.label}</button>`).join("");
     E.projectTabPanels.innerHTML = tabs.map((tab) => {
-      if (tab.id === "overview") return `<div class="tab-panel ${tab.id === current ? "active" : ""}" data-panel="overview"><section class="section-block"><div class="section-head"><h3>Resumo</h3><span class="hint">${p.status}</span></div><div class="empty-note">Projeto operacional e pronto para integrar dados reais.</div></section></div>`;
+      if (tab.id === "overview") return `<div class="tab-panel ${tab.id === current ? "active" : ""}" data-panel="overview"><section class="section-block"><div class="section-head"><h3>Resumo</h3><span class="hint">projeto</span></div><div class="empty-note">Projeto operacional e pronto para integrar dados reais.</div></section></div>`;
       if (tab.id === "settings") {
-        return `<div class="tab-panel ${tab.id === current ? "active" : ""}" data-panel="settings"><div class="split-grid project-settings-grid"><section class="section-block settings-section" style="--section-index:0"><div class="section-head"><h3>Módulos ativos</h3><span class="hint">por projeto</span></div><div class="module-grid">${TABS.filter((t) => !t.fixed).map((t, index) => `<label class="setting-row module-item" style="--item-index:${index}"><span>${t.label}</span><input class="toggle" type="checkbox" data-module-toggle="${t.id}" ${p.modules[t.id] ? "checked" : ""}></label>`).join("")}</div></section><section class="section-block settings-section" style="--section-index:1"><div class="section-head"><h3>Projeto</h3><span class="hint">autosave</span></div><div class="settings-grid"><label class="field project-field" style="--item-index:0"><span class="field-label">Nome</span><input class="inline-input" data-project-field="name" value="${p.name}"></label><label class="field project-field" style="--item-index:1"><span class="field-label">Descrição curta</span><input class="inline-input" data-project-field="description" value="${p.description}"></label><div class="field project-field" style="--item-index:2"><span class="field-label">Cor</span><div class="color-grid">${["#4a4a4f", "#5a5a60", "#6a6a70", "#7a7a80", "#8a8a90", "#9a9aa0", "#666b70", "#777d82", "#55595e", "#8f8f95"].map((color, index) => `<button class="color-chip ${p.color === color ? "active" : ""}" type="button" data-project-color="${color}" style="background:${color}; --item-index:${index}" aria-label="Selecionar cor ${index + 1}"></button>`).join("")}</div></div><label class="field project-field" style="--item-index:3"><span class="field-label">Ícone</span><select class="inline-select" data-project-field="icon">${["bolt", "link", "sync", "db"].map((name) => `<option value="${name}" ${p.icon === name ? "selected" : ""}>${name}</option>`).join("")}</select></label><label class="setting-row project-toggle-row" style="--item-index:4"><span>Fixar no topo da lista</span><input class="toggle" type="checkbox" data-project-field="pinned" ${p.pinned ? "checked" : ""}></label></div></section><section class="section-block settings-section archive-section" style="--section-index:2"><div class="section-head"><h3>Arquivamento</h3><span class="hint">configuração</span></div><div class="settings-grid"><div class="setting-row archive-row" style="--item-index:0"><span>Remover da lista ativa</span><button class="ghost-button" type="button" data-project-archive="${p.id}">Arquivar projeto</button></div></div></section></div></div>`;
+        return `<div class="tab-panel ${tab.id === current ? "active" : ""}" data-panel="settings"><div class="split-grid project-settings-grid"><section class="section-block settings-section" style="--section-index:0"><div class="section-head"><h3>Módulos ativos</h3><span class="hint">por projeto</span></div><div class="module-grid">${TABS.filter((t) => !t.fixed).map((t, index) => `<label class="setting-row module-item" style="--item-index:${index}"><span>${t.label}</span><input class="toggle" type="checkbox" data-module-toggle="${t.id}" ${p.modules[t.id] ? "checked" : ""}></label>`).join("")}</div></section><section class="section-block settings-section" style="--section-index:1"><div class="section-head"><h3>Projeto</h3><span class="hint">autosave</span></div><div class="settings-grid"><label class="field project-field" style="--item-index:0"><span class="field-label">Nome</span><input class="inline-input" data-project-field="name" value="${p.name}"></label><label class="field project-field" style="--item-index:1"><span class="field-label">Descrição curta</span><input class="inline-input" data-project-field="description" value="${p.description}"></label><div class="field project-field" style="--item-index:2"><span class="field-label">Cor do ícone</span><div class="color-grid">${PROJECT_COLOR_OPTIONS.map((color, index) => `<button class="color-chip ${p.color === color ? "active" : ""}" type="button" data-project-color="${color}" style="background:${color}; --item-index:${index}" aria-label="Selecionar cor ${index + 1}"></button>`).join("")}</div></div><div class="field project-field" style="--item-index:3"><span class="field-label">Ícone</span><div class="icon-grid project-icon-grid">${PROJECT_ICON_OPTIONS.map((name, index) => `<button class="icon-option ${p.icon === name ? "active" : ""}" type="button" data-project-icon="${name}" style="--item-index:${index}" aria-label="Selecionar ícone ${name}"><span class="project-mark icon-preview" style="color:${p.color}">${icon(name)}</span><span>${name}</span></button>`).join("")}</div></div><label class="setting-row project-toggle-row" style="--item-index:4"><span>Fixar no topo da lista</span><input class="toggle" type="checkbox" data-project-field="pinned" ${p.pinned ? "checked" : ""}></label></div></section><section class="section-block settings-section archive-section" style="--section-index:2"><div class="section-head"><h3>Arquivamento</h3><span class="hint">configuração</span></div><div class="settings-grid"><div class="setting-row archive-row" style="--item-index:0"><span>Remover da lista ativa</span><button class="ghost-button" type="button" data-project-archive="${p.id}">Arquivar projeto</button></div></div></section></div></div>`;
       }
-      return `<div class="tab-panel ${tab.id === current ? "active" : ""}" data-panel="${tab.id}"><section class="section-block"><div class="section-head"><h3>${tab.label}</h3><span class="hint">ativo</span></div><div class="empty-note">Estrutura pronta para ${tab.label}</div></section></div>`;
+      return `<div class="tab-panel ${tab.id === current ? "active" : ""}" data-panel="${tab.id}"><section class="section-block"><div class="section-head"><h3>${tab.label}</h3><span class="hint">módulo</span></div><div class="empty-note">Estrutura pronta para ${tab.label}</div></section></div>`;
     }).join("");
   }
 
@@ -405,6 +407,16 @@
       if (colorBtn) {
         const p = getProject(S.currentProjectId);
         p.color = colorBtn.dataset.projectColor;
+        renderProject();
+        renderProjects();
+        save();
+        toast("Projeto atualizado");
+      }
+
+      const iconBtn = t.closest("[data-project-icon]");
+      if (iconBtn) {
+        const p = getProject(S.currentProjectId);
+        p.icon = iconBtn.dataset.projectIcon;
         renderProject();
         renderProjects();
         save();
@@ -568,14 +580,6 @@
 
     E.loginSubmit?.addEventListener("click", tryLogin);
     E.sidebarToggle?.addEventListener("click", () => { S.sidebarOpen = !S.sidebarOpen; applySidebar(); save(); });
-    E.projectsFilterButton?.addEventListener("click", () => {
-      const order = ["all", "ativo", "pausado", "inativo"];
-      const next = order[(order.indexOf(S.filters.status) + 1) % order.length];
-      S.filters.status = next;
-      E.projectsFilterButton.textContent = `Filtrar: ${next === "all" ? "Todos" : next}`;
-      renderProjects();
-      save();
-    });
     document.addEventListener("dragstart", (event) => {
       const projectRow = event.target.closest(".project-row");
       const sidebarRow = event.target.closest(".sidebar-item-row");
@@ -625,7 +629,6 @@
   function init() {
     if (!S.projectOrder?.length) S.projectOrder = S.projects.map((p) => p.id);
     E.projectsSearch.value = S.filters.search || "";
-    E.projectsFilterButton.textContent = `Filtrar: ${S.filters.status === "all" ? "Todos" : S.filters.status}`;
     applyTheme();
     applyRadius();
     applySidebar();

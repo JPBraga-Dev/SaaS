@@ -18,7 +18,6 @@
       --skeleton-a: rgba(23, 23, 21, 0.08);
       --skeleton-b: rgba(23, 23, 21, 0.03);
       --grid-line: rgba(23, 23, 21, 0.03);
-      --status-dot: rgba(23, 23, 21, 0.35);
       --project-dot: rgba(23, 23, 21, 0.07);
       --sidebar-bg: rgba(236, 241, 250, 0.88);
       --topbar-bg: rgba(232, 237, 247, 0.82);
@@ -62,7 +61,6 @@
       --skeleton-a: rgba(244, 244, 245, 0.16);
       --skeleton-b: rgba(244, 244, 245, 0.06);
       --grid-line: rgba(161, 161, 170, 0.10);
-      --status-dot: rgba(228, 228, 231, 0.82);
       --project-dot: rgba(113, 113, 122, 0.42);
       --sidebar-bg: rgba(19, 19, 21, 0.98);
       --topbar-bg: rgba(16, 16, 18, 0.98);
@@ -494,7 +492,7 @@
       min-height: 62px;
       padding: 0 18px;
       display: grid;
-      grid-template-columns: minmax(0, 1fr) 110px 120px 18px;
+      grid-template-columns: minmax(0, 1fr) 72px 18px;
       align-items: center;
       gap: 12px;
       border-top: 1px solid var(--line);
@@ -515,12 +513,19 @@
     }
 
     .project-mark {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      border: 1px solid var(--line-strong);
-      background: var(--project-dot);
+      width: 28px;
+      height: 28px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: var(--panel-soft-2);
       flex: 0 0 auto;
+      display: inline-grid;
+      place-items: center;
+    }
+
+    .project-mark svg {
+      width: 14px;
+      height: 14px;
     }
 
     .project-copy {
@@ -553,26 +558,6 @@
       border-bottom: 1px solid var(--line);
       margin-bottom: 16px;
       animation: section-enter 280ms var(--transition-slow);
-    }
-
-    .status-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
-      height: 24px;
-      padding: 0 10px;
-      border-radius: 999px;
-      border: 1px solid var(--line);
-      color: var(--muted);
-      background: var(--control-bg);
-    }
-
-    .status-pill::before {
-      content: "";
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: var(--status-dot);
     }
 
     .tab-bar {
@@ -828,17 +813,6 @@
       transform: translateX(6px);
       transition: opacity 220ms ease, transform 220ms ease;
     }
-
-    .status-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      display: inline-block;
-    }
-
-    .status-dot.active { background: #7f9a87; }
-    .status-dot.paused { background: #a49170; }
-    .status-dot.inactive { background: #7f7f86; }
 
     .profile-grid {
       display: grid;
@@ -1379,6 +1353,50 @@
       border-color: var(--line-strong);
     }
 
+    .project-icon-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .icon-option {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--panel-soft);
+      min-height: 48px;
+      padding: 10px 12px;
+      display: inline-grid;
+      grid-template-columns: auto 1fr;
+      align-items: center;
+      gap: 10px;
+      text-transform: lowercase;
+      color: var(--muted);
+      transition: border-color var(--transition), background var(--transition), transform var(--transition-snap), box-shadow var(--transition-snap), color var(--transition);
+    }
+
+    .icon-option:hover {
+      color: var(--text);
+      border-color: var(--line-strong);
+      background: var(--control-bg-soft);
+      transform: translateY(-1px);
+      box-shadow: var(--panel-shadow-soft);
+    }
+
+    .icon-option.active {
+      color: var(--text);
+      border-color: var(--line-strong);
+      background: var(--active);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+    }
+
+    .icon-preview {
+      width: 30px;
+      height: 30px;
+    }
+
+    .icon-preview svg {
+      width: 15px;
+      height: 15px;
+    }
+
     .inline-input, .inline-select {
       width: 100%;
       height: 30px;
@@ -1537,10 +1555,14 @@
       }
 
       .project-row {
-        grid-template-columns: minmax(0, 1fr) 90px 90px 18px;
+        grid-template-columns: minmax(0, 1fr) 72px 18px;
       }
 
       .module-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .project-icon-grid {
         grid-template-columns: 1fr;
       }
     }
@@ -1605,7 +1627,7 @@
         padding-bottom: 12px;
       }
 
-      .project-row .muted, .project-row .hint { display: none; }
+      .project-row .hint { display: none; }
       .project-head { flex-direction: column; }
       .settings-card-head,
       .settings-inline-card,
@@ -1713,7 +1735,7 @@
               </div>
               <div class="panel-body">
                 <div class="dash-grid">
-                  <div class="metric metric-kpi"><p class="hint">Projetos ativos</p><h3 id="kpi-projects">0</h3></div>
+                  <div class="metric metric-kpi"><p class="hint">Total de projetos</p><h3 id="kpi-projects">0</h3></div>
                   <div class="metric metric-kpi"><p class="hint">Triggers configurados</p><h3 id="kpi-triggers">—</h3></div>
                   <div class="metric metric-kpi"><p class="hint">Integrações conectadas</p><h3 id="kpi-integrations">—</h3></div>
                 </div>
@@ -1749,7 +1771,6 @@
                 <h2>Projetos</h2>
               </div>
               <div class="project-toolbar">
-                <button class="ghost-button" type="button" id="projects-filter-button">Filtrar</button>
                 <input class="search" id="projects-search" type="search" placeholder="Buscar projeto" aria-label="Buscar projeto">
               </div>
             </div>
@@ -1768,7 +1789,6 @@
                 </div>
 
                 <div class="project-toolbar">
-                  <span class="status-pill" id="project-status">Ativo</span>
                   <button class="soft-button" type="button" data-page-target="projects">Voltar</button>
                 </div>
               </div>
