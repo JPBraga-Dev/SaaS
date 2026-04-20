@@ -22,4 +22,4 @@ python server.py
 - `static/js/app.js` comportamento do painel
 - `data/studio_panel_schema.sql` banco SQL inicial
 # SaaS
- 1234567
+ 123456
